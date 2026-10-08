@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Studio | Lab 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Жестко убиваем стрелочки у полей ввода цифр во всех браузерах (включая Safari) */
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-100 min-h-screen flex items-center justify-center p-6 font-sans">
+
+    <div class="bg-[#1e293b] border border-slate-700 rounded-2xl shadow-2xl p-8 max-w-5xl w-full">
+        <h1 class="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+            Интерактивные цветовые модели
+        </h1>
+
+        <!-- Верхняя панель -->
+        <div class="flex flex-col md:flex-row items-stretch gap-6 bg-slate-900/50 p-6 rounded-xl mb-8 border border-slate-700/50">
+            <!-- Квадрат с цветом -->
+            <div id="preview" class="w-full md:w-1/3 min-h-[120px] rounded-lg shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] border border-slate-600 transition-colors duration-75"></div>
+            
+            <!-- Инпуты -->
+            <div class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6">
+                <!-- Палитра -->
+                <div class="flex flex-col items-center justify-center bg-slate-800/50 w-full sm:w-1/2 h-full rounded-lg border border-slate-700 p-4">
+                    <span class="text-xs text-slate-400 uppercase tracking-widest mb-3 font-semibold">Палитра</span>
+                    <div class="relative w-14 h-14 rounded overflow-hidden border border-slate-500 hover:border-indigo-400 transition-colors">
+                        <!-- Нативный color picker -->
+                        <input type="color" id="picker" value='#00e5ff' class="absolute -top-2 -left-2 w-20 h-20 cursor-pointer bg-transparent border-0">
+                    </div>
+                </div>
+
+                <!-- HEX -->
+                <div class="flex flex-col items-center justify-center bg-slate-800/50 w-full sm:w-1/2 h-full rounded-lg border border-slate-700 p-4">
+                    <span class="text-xs text-slate-400 uppercase tracking-widest mb-3 font-semibold">HEX-код</span>
+                    <input type="text" id="hex-input" value='#00e5ff' maxlength="7" 
+                           class="bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 w-32 text-center font-mono text-lg focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                </div>
+            </div>
+        </div>
+
+        <!-- Сетка моделей -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            <!-- RGB -->
+            <div class="bg-slate-900/40 p-6 rounded-xl border border-slate-700/50 flex flex-col h-full">
+                <h2 class="text-lg font-bold mb-6 text-indigo-400 border-b border-slate-700 pb-2">RGB</h2>
+                <div id="rgb-controls" class="flex flex-col justify-between flex-grow gap-4"></div>
+            </div>
+
+            <!-- CMYK -->
+            <div class="bg-slate-900/40 p-6 rounded-xl border border-slate-700/50 flex flex-col h-full">
+                <h2 class="text-lg font-bold mb-6 text-cyan-400 border-b border-slate-700 pb-2">CMYK</h2>
+                <div id="cmyk-controls" class="flex flex-col justify-between flex-grow gap-4"></div>
+            </div>
+
+            <!-- HSV -->
+            <div class="bg-slate-900/40 p-6 rounded-xl border border-slate-700/50 flex flex-col h-full">
+                <h2 class="text-lg font-bold mb-6 text-emerald-400 border-b border-slate-700 pb-2">HSV</h2>
+                <div id="hsv-controls" class="flex flex-col justify-between flex-grow gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const config = {
+        rgb: [{id:'r', max:255, color: 'accent-indigo-500'}, {id:'g', max:255, color: 'accent-indigo-500'}, {id:'b', max:255, color: 'accent-indigo-500'}],
+        cmyk: [{id:'c', max:100, color: 'accent-cyan-500'}, {id:'m', max:100, color: 'accent-cyan-500'}, {id:'y', max:100, color: 'accent-cyan-500'}, {id:'k', max:100, color: 'accent-slate-500'}],
+        hsv: [{id:'h', max:360, color: 'accent-emerald-500'}, {id:'s', max:100, color: 'accent-emerald-500'}, {id:'v', max:100, color: 'accent-emerald-500'}]
+    };
+
+    // Генерация HTML
+    for (const [model, items] of Object.entries(config)) {
+        const container = document.getElementById(`${model}-controls`);
+        items.forEach(item => {
+            container.innerHTML += `
+                <div class="grid grid-cols-[20px_1fr_55px] gap-4 items-center">
+                    <label class="text-right font-bold text-slate-400 uppercase text-sm">${item.id}</label>
+                    
+                    <input type="range" id="${item.id}-sl" min="0" max="${item.max}" class="w-full cursor-pointer ${item.color}" oninput="sync('${model}', '${item.id}', this.value)">
+                    
+                    <input type="number" id="${item.id}-num" min="0" max="${item.max}" class="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1.5 text-center text-sm font-mono focus:outline-none focus:border-indigo-500" oninput="sync('${model}', '${item.id}', this.value)">
+                </div>`;
+        });
+    }
+
+    async function sendToPython(source, values) {
+        const response = await fetch('/api/convert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source, values })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            updateUI(source, data);
+        }
+    }
+
+    function sync(model, channel, val) {
+        const max = config[model].find(i => i.id === channel).max;
+        if (parseInt(val) > max) {
+            val = max;
+        }
+        if (parseInt(val) < 0 || val === '') {
+            val = 0;
+        }
+
+        document.getElementById(`${channel}-sl`).value = val;
+        document.getElementById(`${channel}-num`).value = val;
+        
+        const values = {};
+        config[model].forEach(item => {
+            values[item.id] = document.getElementById(`${item.id}-num`).value || 0;
+        });
+        sendToPython(model, values);
+    }
+
+    function updateUI(source, data) {
+        document.getElementById('preview').style.backgroundColor = data.hex;
+        if (source !== 'hex') {
+            document.getElementById('picker').value = data.hex;
+            document.getElementById('hex-input').value = data.hex;
+        }
+        for (const [model, items] of Object.entries(config)) {
+            if (source !== model) {
+                items.forEach(item => {
+                    document.getElementById(`${item.id}-sl`).value = data[model][item.id];
+                    document.getElementById(`${item.id}-num`).value = data[model][item.id];
+                });
+            }
+        }
+    }
+
+    document.getElementById('picker').addEventListener('input', (e) => {
+        document.getElementById('hex-input').value = e.target.value.toUpperCase();
+        sendToPython('hex', { hex: e.target.value });
+    });
+    
+    document.getElementById('hex-input').addEventListener('change', (e) => {
+        let val = e.target.value;
+        if (!val.startsWith('#')) val = '#' + val;
+        if (/^#[0-9A-F]{6}$/i.test(val)) {
+            document.getElementById('picker').value = val;
+            e.target.value = val.toUpperCase();
+            sendToPython('hex', { hex: val });
+        }
+    });
+
+    sendToPython('hex', { hex: '#00e5ff' });
+</script>
+</body>
+</html>
