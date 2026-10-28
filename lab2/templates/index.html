@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Интерактивная обработка изображений</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         input[type="number"] {
             -moz-appearance: textfield;
@@ -16,7 +15,6 @@
             margin: 0; 
         }
 
-        /* Четкая видимая дорожка слайдера */
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -73,13 +71,11 @@
             transform: scale(1.15);
         }
 
-        /* Единая высота для геометрического выравнивания (42px) */
         .box-row {
             height: 42px;
             box-sizing: border-box;
         }
 
-        /* Густой изумрудный */
         .btn-emerald {
             background: #06281e;
             border: 1px solid #064e3b;
@@ -92,7 +88,6 @@
             color: #ffffff;
         }
 
-        /* Глубокий сапфировый */
         .btn-sapphire {
             background: #0f1d38;
             border: 1px solid #1e3a8a;
@@ -105,7 +100,6 @@
             color: #ffffff;
         }
 
-        /* Нейтральные элементы */
         .btn-neutral {
             background: #18181b;
             border: 1px solid #27272a;
@@ -132,19 +126,16 @@
 
     <div class="bg-[#121215] border border-[#202024] rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
         
-        <!-- Заголовок -->
         <h1 class="text-2xl font-medium mb-6 text-center tracking-wide text-[#f4f4f5]">
             Интерактивная обработка изображений
         </h1>
 
-        <!-- Панель образцов, сброса и загрузки -->
         <div class="h-[46px] flex items-center justify-between gap-3 mb-6 bg-[#0c0c0e] px-3 rounded-xl border border-[#1e1e22]">
             <div class="flex items-center gap-2 text-xs flex-1 min-w-0">
                 <span class="text-[#71717a] uppercase tracking-wider text-[11px] font-medium shrink-0">Образцы:</span>
                 <div id="preset-container" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1"></div>
             </div>
 
-            <!-- Общие глобальные кнопки управления -->
             <div class="flex items-center gap-2 shrink-0">
                 <button onclick="resetAll()" title="Сбросить все параметры к оригиналу" class="btn-neutral h-[32px] px-3 rounded-lg flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5]">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,64 +154,39 @@
             </div>
         </div>
 
-        <!-- Видовые экраны (строго одинаковая высота h-[310px]) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            
-            <!-- Исходное -->
-            <div class="h-[310px] bg-[#0c0c0e] border border-[#1e1e22] rounded-xl p-4 flex flex-col justify-between">
+            <div class="h-[280px] bg-[#0c0c0e] border border-[#1e1e22] rounded-xl p-4 flex flex-col justify-between">
                 <div class="flex justify-between items-center h-5 text-xs">
                     <span class="text-[#a1a1aa] font-medium uppercase tracking-wider text-[11px]">Исходное</span>
                     <span id="range-orig" class="font-mono text-[#71717a] text-[11px]">—</span>
                 </div>
                 
-                <div class="w-full h-44 rounded-lg overflow-hidden flex items-center justify-center bg-[#070708] border border-[#18181b]">
+                <div class="w-full flex-1 mt-3 rounded-lg overflow-hidden flex items-center justify-center bg-[#070708] border border-[#18181b]">
                     <img id="img-orig" class="max-h-full max-w-full object-contain" style="display:none;">
                     <span id="orig-empty" class="text-xs text-[#52525b]">Загрузка...</span>
                 </div>
-
-                <div>
-                    <div class="text-[10px] text-[#71717a] uppercase tracking-wider mb-1">Гистограмма</div>
-                    <div class="w-full h-14">
-                        <canvas id="chart-orig"></canvas>
-                    </div>
-                </div>
             </div>
 
-            <!-- Результат -->
-            <div class="h-[310px] bg-[#0c0c0e] border border-[#1e1e22] rounded-xl p-4 flex flex-col justify-between">
+            <div class="h-[280px] bg-[#0c0c0e] border border-[#1e1e22] rounded-xl p-4 flex flex-col justify-between">
                 <div class="flex justify-between items-center h-5 text-xs">
                     <span class="text-[#a1a1aa] font-medium uppercase tracking-wider text-[11px]">Результат</span>
                     <span id="range-proc" class="font-mono text-[#34d399] text-[11px]">—</span>
                 </div>
                 
-                <div class="w-full h-44 rounded-lg overflow-hidden flex items-center justify-center bg-[#070708] border border-[#18181b]">
+                <div class="w-full flex-1 mt-3 rounded-lg overflow-hidden flex items-center justify-center bg-[#070708] border border-[#18181b]">
                     <img id="img-proc" class="max-h-full max-w-full object-contain" style="display:none;">
                     <span id="proc-empty" class="text-xs text-[#52525b]">Выберите действие</span>
                 </div>
-
-                <div>
-                    <div class="flex justify-between items-center text-[10px] text-[#71717a] uppercase tracking-wider mb-1">
-                        <span>Гистограмма</span>
-                        <span id="time-badge" class="font-mono text-[#71717a] text-[10px]"></span>
-                    </div>
-                    <div class="w-full h-14">
-                        <canvas id="chart-proc"></canvas>
-                    </div>
-                </div>
             </div>
-
         </div>
 
-        <!-- Нижняя панель: 3 колонки инструментов -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             
-            <!-- Колонка 1: Поэлементные -->
             <div class="space-y-3">
                 <div class="h-6 flex items-center">
                     <h2 class="text-xs font-semibold text-[#71717a] uppercase tracking-widest">Поэлементные</h2>
                 </div>
                 
-                <!-- Яркость -->
                 <div class="box-row grid grid-cols-[20px_1fr_45px] gap-3 items-center bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
                     <label class="text-right font-medium text-[#a1a1aa] text-xs">Δ</label>
                     <input type="range" id="sl-bright" min="-120" max="120" value="0" oninput="syncPoint('bright', this.value)">
@@ -229,7 +195,6 @@
                            oninput="syncPoint('bright', this.value)">
                 </div>
 
-                <!-- Контраст -->
                 <div class="box-row grid grid-cols-[20px_1fr_45px] gap-3 items-center bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
                     <label class="text-right font-medium text-[#a1a1aa] text-xs">α</label>
                     <input type="range" id="sl-contrast" min="2" max="25" value="10" oninput="syncPoint('contrast', this.value / 10)">
@@ -238,7 +203,6 @@
                            oninput="syncPoint('contrast', this.value)">
                 </div>
 
-                <!-- Гамма -->
                 <div class="box-row grid grid-cols-[20px_1fr_45px] gap-3 items-center bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
                     <label class="text-right font-medium text-[#a1a1aa] text-xs">γ</label>
                     <input type="range" id="sl-gamma" min="2" max="30" value="10" oninput="syncPoint('gamma', this.value / 10)">
@@ -247,14 +211,12 @@
                            oninput="syncPoint('gamma', this.value)">
                 </div>
 
-                <!-- Инверсия -->
                 <div class="box-row flex items-center justify-between bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
                     <span class="text-xs text-[#a1a1aa]">Инверсия</span>
                     <input type="checkbox" id="chk-invert" class="accent-[#059669] w-4 h-4 cursor-pointer" onchange="runPointOps()">
                 </div>
             </div>
 
-            <!-- Колонка 2: Контрастирование -->
             <div class="space-y-3">
                 <div class="h-6 flex items-center">
                     <h2 class="text-xs font-semibold text-[#059669] uppercase tracking-widest">Контрастирование</h2>
@@ -271,7 +233,6 @@
                 </button>
             </div>
 
-            <!-- Колонка 3: Бинаризация -->
             <div class="space-y-3">
                 <div class="h-6 flex items-center">
                     <h2 class="text-xs font-semibold text-[#3b82f6] uppercase tracking-widest">Бинаризация</h2>
@@ -287,7 +248,6 @@
                     <span class="text-[10px] text-[#93c5fd]/60">среднее</span>
                 </button>
 
-                <!-- Вывод порога: строго та же высота 42px -->
                 <div class="box-row bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg flex items-center justify-between text-xs">
                     <span class="text-[#71717a] text-[11px] font-medium uppercase tracking-wider">Порог T:</span>
                     <span id="threshold-val" class="font-mono text-base text-[#60a5fa] font-semibold leading-none">—</span>
@@ -300,8 +260,6 @@
 
 <script>
     let curPreset = null;
-    let chOrig = null;
-    let chProc = null;
 
     const PRESET_NAMES = {
         '01_low_contrast_fog.png': 'Туман',
@@ -313,37 +271,6 @@
         '07_color_shapes.png': 'Цветные фигуры',
         '08_color_fog.png': 'Цветная дымка'
     };
-
-    function initCharts() {
-        const makeCfg = (fillColor, borderColor) => ({
-            type: 'line',
-            data: { 
-                labels: Array.from({length: 256}, (_, i) => i), 
-                datasets: [{ 
-                    data: new Array(256).fill(0), 
-                    backgroundColor: fillColor, 
-                    borderColor: borderColor,
-                    borderWidth: 1.5,
-                    fill: true,
-                    pointRadius: 0,
-                    tension: 0.35
-                }] 
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                scales: {
-                    x: { display: false },
-                    y: { display: false }
-                }
-            }
-        });
-
-        chOrig = new Chart(document.getElementById('chart-orig'), makeCfg('rgba(113, 113, 122, 0.2)', '#71717a'));
-        chProc = new Chart(document.getElementById('chart-proc'), makeCfg('rgba(5, 150, 105, 0.25)', '#059669'));
-    }
 
     async function loadPresets() {
         try {
@@ -435,7 +362,6 @@
         sendRequest(mode, {});
     }
 
-    // Глобальный сброс всех настроек и возврат к чистому исходнику
     function resetAll() {
         document.getElementById('sl-bright').value = 0;
         document.getElementById('num-bright').value = 0;
@@ -479,16 +405,6 @@
             document.getElementById('range-proc').innerText = `${d.stats_after.min} — ${d.stats_after.max}`;
 
             document.getElementById('threshold-val').innerText = d.threshold !== null ? d.threshold : '—';
-            document.getElementById('time-badge').innerText = `${d.time_ms} мс`;
-
-            chOrig.data.datasets[0].data = d.stats_before.hist;
-            chOrig.update('none');
-
-            chProc.data.datasets[0].data = d.stats_after.hist;
-            const isThresh = mode.startsWith('threshold');
-            chProc.data.datasets[0].backgroundColor = isThresh ? 'rgba(59, 130, 246, 0.25)' : 'rgba(5, 150, 105, 0.25)';
-            chProc.data.datasets[0].borderColor = isThresh ? '#3b82f6' : '#059669';
-            chProc.update('none');
 
         } catch (e) {
             console.error(e);
@@ -496,7 +412,6 @@
     }
 
     window.onload = () => {
-        initCharts();
         loadPresets();
     };
 </script>

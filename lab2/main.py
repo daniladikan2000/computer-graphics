@@ -1,8 +1,3 @@
-"""
-Веб-сервер Flask для Лабораторной работы №2.
-Обеспечивает REST API для обработки изображений и динамического сохранения загрузок.
-"""
-
 import os
 import time
 from werkzeug.utils import secure_filename
@@ -15,7 +10,6 @@ os.makedirs(IMAGES_DIR, exist_ok=True)
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
 
-
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -23,7 +17,6 @@ def index():
 
 @app.route("/api/presets")
 def get_presets():
-    """Возвращает список всех изображений из папки images."""
     files = [
         f for f in sorted(os.listdir(IMAGES_DIR))
         if os.path.splitext(f.lower())[1] in ALLOWED_EXTENSIONS
@@ -38,7 +31,6 @@ def serve_preset(filename):
 
 @app.route("/api/upload", methods=["POST"])
 def upload_image():
-    """Сохраняет загруженное изображение в папку images и делает его доступным в пресетах."""
     if "file" not in request.files or not request.files["file"].filename:
         return jsonify({"error": "Файл не выбран"}), 400
 
@@ -48,7 +40,6 @@ def upload_image():
     if not clean_name:
         clean_name = f"image_{int(time.time())}.png"
 
-    # Проверяем расширение
     ext = os.path.splitext(clean_name)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         clean_name += ".png"
@@ -73,7 +64,6 @@ def process_endpoint():
             with open(path, "rb") as f:
                 img = load_image(f.read())
         elif "file" in request.files and request.files["file"].filename:
-            # Если файл передан напрямую в process, также сохраняем его в images
             file = request.files["file"]
             fname = secure_filename(file.filename) or f"img_{int(time.time())}.png"
             filepath = os.path.join(IMAGES_DIR, fname)
