@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Интерактивная обработка изображений</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        /* Четкая видимая дорожка слайдера */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #27272a;
+            border-radius: 9999px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            background: #3f3f46;
+            border-radius: 9999px;
+        }
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            background: #3f3f46;
+            border-radius: 9999px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #f4f4f5;
+            border: 2px solid #52525b;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+            cursor: pointer;
+            margin-top: -6px;
+            transition: all 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #10b981;
+            border-color: #059669;
+            transform: scale(1.15);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #f4f4f5;
+            border: 2px solid #52525b;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #10b981;
+            border-color: #059669;
+            transform: scale(1.15);
+        }
+
+        /* Единая высота для геометрического выравнивания (42px) */
+        .box-row {
+            height: 42px;
+            box-sizing: border-box;
+        }
+
+        /* Густой изумрудный */
+        .btn-emerald {
+            background: #06281e;
+            border: 1px solid #064e3b;
+            color: #d1fae5;
+            transition: all 0.15s ease;
+        }
+        .btn-emerald:hover {
+            background: #064e3b;
+            border-color: #059669;
+            color: #ffffff;
+        }
+
+        /* Глубокий сапфировый */
+        .btn-sapphire {
+            background: #0f1d38;
+            border: 1px solid #1e3a8a;
+            color: #dbeafe;
+            transition: all 0.15s ease;
+        }
+        .btn-sapphire:hover {
+            background: #1e3a8a;
+            border-color: #2563eb;
+            color: #ffffff;
+        }
+
+        /* Нейтральные элементы */
+        .btn-neutral {
+            background: #18181b;
+            border: 1px solid #27272a;
+            color: #a1a1aa;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .btn-neutral:hover, .btn-neutral.active {
+            background: #27272a;
+            border-color: #3f3f46;
+            color: #f4f4f5;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-[#09090b] text-[#e4e4e7] min-h-screen flex items-center justify-center p-6 font-sans">
+
+    <div class="bg-[#121215] border border-[#202024] rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
+        
+        <!-- Заголовок -->
+        <h1 class="text-2xl font-medium mb-6 text-center tracking-wide text-[#f4f4f5]">
+            Интерактивная обработка изображений
+        </h1>
+
+        <!-- Панель образцов, сброса и загрузки -->
+        <div class="h-[46px] flex items-center justify-between gap-3 mb-6 bg-[#0c0c0e] px-3 rounded-xl border border-[#1e1e22]">
+            <div class="flex items-center gap-2 text-xs flex-1 min-w-0">
+                <span class="text-[#71717a] uppercase tracking-wider text-[11px] font-medium shrink-0">Образцы:</span>
+                <div id="preset-container" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1"></div>
+            </div>
+
+            <!-- Общие глобальные кнопки управления -->
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="resetAll()" title="Сбросить все параметры к оригиналу" class="btn-neutral h-[32px] px-3 rounded-lg flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Сбросить</span>
+                </button>
+
+                <label class="btn-neutral h-[32px] px-3 rounded-lg cursor-pointer flex items-center gap-1.5 text-xs">
+                    <svg class="w-3.5 h-3.5 text-[#a1a1aa]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <span>Свой файл</span>
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                </label>
+            </div>
+        </div>
+
+        <!-- Видовые экраны (строго одинаковая высота h-[310px]) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            
+            <!-- Исходное -->
+            <div class="h-[310px] bg-[#0c0c0e] border border-[#1e1e22] rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex justify-between items-center h-5 text-xs">
+                    <span class="text-[#a1a1aa] font-medium uppercase tracking-wider text-[11px]">Исходное</span>
+                    <span id="range-orig" class="font-mono text-[#71717a] text-[11px]">—</span>
+                </div>
+                
+                <div class="w-full h-44 rounded-lg overflow-hidden flex items-center justify-center bg-[#070708] border border-[#18181b]">
+                    <img id="img-orig" class="max-h-full max-w-full object-contain" style="display:none;">
+                    <span id="orig-empty" class="text-xs text-[#52525b]">Загрузка...</span>
+                </div>
+
+                <div>
+                    <div class="text-[10px] text-[#71717a] uppercase tracking-wider mb-1">Гистограмма</div>
+                    <div class="w-full h-14">
+                        <canvas id="chart-orig"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Результат -->
+            <div class="h-[310px] bg-[#0c0c0e] border border-[#1e1e22] rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex justify-between items-center h-5 text-xs">
+                    <span class="text-[#a1a1aa] font-medium uppercase tracking-wider text-[11px]">Результат</span>
+                    <span id="range-proc" class="font-mono text-[#34d399] text-[11px]">—</span>
+                </div>
+                
+                <div class="w-full h-44 rounded-lg overflow-hidden flex items-center justify-center bg-[#070708] border border-[#18181b]">
+                    <img id="img-proc" class="max-h-full max-w-full object-contain" style="display:none;">
+                    <span id="proc-empty" class="text-xs text-[#52525b]">Выберите действие</span>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center text-[10px] text-[#71717a] uppercase tracking-wider mb-1">
+                        <span>Гистограмма</span>
+                        <span id="time-badge" class="font-mono text-[#71717a] text-[10px]"></span>
+                    </div>
+                    <div class="w-full h-14">
+                        <canvas id="chart-proc"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Нижняя панель: 3 колонки инструментов -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <!-- Колонка 1: Поэлементные -->
+            <div class="space-y-3">
+                <div class="h-6 flex items-center">
+                    <h2 class="text-xs font-semibold text-[#71717a] uppercase tracking-widest">Поэлементные</h2>
+                </div>
+                
+                <!-- Яркость -->
+                <div class="box-row grid grid-cols-[20px_1fr_45px] gap-3 items-center bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
+                    <label class="text-right font-medium text-[#a1a1aa] text-xs">Δ</label>
+                    <input type="range" id="sl-bright" min="-120" max="120" value="0" oninput="syncPoint('bright', this.value)">
+                    <input type="number" id="num-bright" min="-120" max="120" value="0"
+                           class="w-full bg-transparent border-b border-[#27272a] text-[#f4f4f5] px-1 py-0.5 text-center text-xs font-mono focus:outline-none focus:border-[#34d399]"
+                           oninput="syncPoint('bright', this.value)">
+                </div>
+
+                <!-- Контраст -->
+                <div class="box-row grid grid-cols-[20px_1fr_45px] gap-3 items-center bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
+                    <label class="text-right font-medium text-[#a1a1aa] text-xs">α</label>
+                    <input type="range" id="sl-contrast" min="2" max="25" value="10" oninput="syncPoint('contrast', this.value / 10)">
+                    <input type="number" id="num-contrast" min="0.2" max="2.5" step="0.1" value="1.0"
+                           class="w-full bg-transparent border-b border-[#27272a] text-[#f4f4f5] px-1 py-0.5 text-center text-xs font-mono focus:outline-none focus:border-[#34d399]"
+                           oninput="syncPoint('contrast', this.value)">
+                </div>
+
+                <!-- Гамма -->
+                <div class="box-row grid grid-cols-[20px_1fr_45px] gap-3 items-center bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
+                    <label class="text-right font-medium text-[#a1a1aa] text-xs">γ</label>
+                    <input type="range" id="sl-gamma" min="2" max="30" value="10" oninput="syncPoint('gamma', this.value / 10)">
+                    <input type="number" id="num-gamma" min="0.2" max="3.0" step="0.1" value="1.0"
+                           class="w-full bg-transparent border-b border-[#27272a] text-[#f4f4f5] px-1 py-0.5 text-center text-xs font-mono focus:outline-none focus:border-[#34d399]"
+                           oninput="syncPoint('gamma', this.value)">
+                </div>
+
+                <!-- Инверсия -->
+                <div class="box-row flex items-center justify-between bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg">
+                    <span class="text-xs text-[#a1a1aa]">Инверсия</span>
+                    <input type="checkbox" id="chk-invert" class="accent-[#059669] w-4 h-4 cursor-pointer" onchange="runPointOps()">
+                </div>
+            </div>
+
+            <!-- Колонка 2: Контрастирование -->
+            <div class="space-y-3">
+                <div class="h-6 flex items-center">
+                    <h2 class="text-xs font-semibold text-[#059669] uppercase tracking-widest">Контрастирование</h2>
+                </div>
+                
+                <button onclick="applyMethod('linear_stretch')" class="box-row btn-emerald w-full px-3 rounded-lg text-xs font-medium flex items-center justify-between">
+                    <span>Линейное</span>
+                    <span class="text-[10px] text-[#6ee7b7]/60">растяжение</span>
+                </button>
+
+                <button onclick="applyMethod('robust_stretch')" class="box-row btn-emerald w-full px-3 rounded-lg text-xs font-medium flex items-center justify-between">
+                    <span>Робастное</span>
+                    <span class="text-[10px] text-[#6ee7b7]/60">без шума</span>
+                </button>
+            </div>
+
+            <!-- Колонка 3: Бинаризация -->
+            <div class="space-y-3">
+                <div class="h-6 flex items-center">
+                    <h2 class="text-xs font-semibold text-[#3b82f6] uppercase tracking-widest">Бинаризация</h2>
+                </div>
+                
+                <button onclick="applyMethod('threshold_otsu')" class="box-row btn-sapphire w-full px-3 rounded-lg text-xs font-medium flex items-center justify-between">
+                    <span>Метод Оцу</span>
+                    <span class="text-[10px] text-[#93c5fd]/60">дисперсия</span>
+                </button>
+
+                <button onclick="applyMethod('threshold_iterative')" class="box-row btn-sapphire w-full px-3 rounded-lg text-xs font-medium flex items-center justify-between">
+                    <span>Метод IsoData</span>
+                    <span class="text-[10px] text-[#93c5fd]/60">среднее</span>
+                </button>
+
+                <!-- Вывод порога: строго та же высота 42px -->
+                <div class="box-row bg-[#0c0c0e] border border-[#1e1e22] px-3 rounded-lg flex items-center justify-between text-xs">
+                    <span class="text-[#71717a] text-[11px] font-medium uppercase tracking-wider">Порог T:</span>
+                    <span id="threshold-val" class="font-mono text-base text-[#60a5fa] font-semibold leading-none">—</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+<script>
+    let curPreset = null;
+    let chOrig = null;
+    let chProc = null;
+
+    const PRESET_NAMES = {
+        '01_low_contrast_fog.png': 'Туман',
+        '02_low_contrast_with_outliers.png': 'Шум',
+        '03_document_text.png': 'Текст',
+        '04_bimodal_objects.png': 'Фигуры',
+        '05_uneven_lighting.png': 'Градиент',
+        '06_color_landscape.png': 'Цветной пейзаж',
+        '07_color_shapes.png': 'Цветные фигуры',
+        '08_color_fog.png': 'Цветная дымка'
+    };
+
+    function initCharts() {
+        const makeCfg = (fillColor, borderColor) => ({
+            type: 'line',
+            data: { 
+                labels: Array.from({length: 256}, (_, i) => i), 
+                datasets: [{ 
+                    data: new Array(256).fill(0), 
+                    backgroundColor: fillColor, 
+                    borderColor: borderColor,
+                    borderWidth: 1.5,
+                    fill: true,
+                    pointRadius: 0,
+                    tension: 0.35
+                }] 
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+
+        chOrig = new Chart(document.getElementById('chart-orig'), makeCfg('rgba(113, 113, 122, 0.2)', '#71717a'));
+        chProc = new Chart(document.getElementById('chart-proc'), makeCfg('rgba(5, 150, 105, 0.25)', '#059669'));
+    }
+
+    async function loadPresets() {
+        try {
+            const res = await fetch('/api/presets');
+            const data = await res.json();
+            const box = document.getElementById('preset-container');
+            box.innerHTML = '';
+            
+            data.presets.forEach(name => {
+                const cleanName = name.replace(/\.[^/.]+$/, "").replace(/^\d+_/, "").replace(/_/g, " ");
+                const label = PRESET_NAMES[name] || cleanName;
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn-neutral h-[32px] text-xs px-3 rounded-md flex items-center shrink-0';
+                btn.innerText = label;
+                btn.id = 'preset-' + name;
+                btn.onclick = () => selectPreset(name);
+                box.appendChild(btn);
+            });
+
+            if (!curPreset && data.presets.length > 0) {
+                selectPreset(data.presets[0]);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function selectPreset(name) {
+        curPreset = name;
+        document.querySelectorAll('#preset-container button').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById('preset-' + name);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+        runPointOps();
+    }
+
+    document.getElementById('file-input').onchange = async (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const fd = new FormData();
+            fd.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const json = await res.json();
+                
+                if (json.status === 'success' && json.filename) {
+                    await loadPresets();
+                    selectPreset(json.filename);
+                } else {
+                    alert(json.error || 'Ошибка при загрузке');
+                }
+            } catch (err) {
+                alert('Не удалось загрузить файл: ' + err.message);
+            }
+            e.target.value = '';
+        }
+    };
+
+    function syncPoint(param, val) {
+        if (param === 'bright') {
+            document.getElementById('sl-bright').value = val;
+            document.getElementById('num-bright').value = val;
+        } else if (param === 'contrast') {
+            const num = parseFloat(val);
+            document.getElementById('sl-contrast').value = Math.round(num * 10);
+            document.getElementById('num-contrast').value = num.toFixed(1);
+        } else if (param === 'gamma') {
+            const num = parseFloat(val);
+            document.getElementById('sl-gamma').value = Math.round(num * 10);
+            document.getElementById('num-gamma').value = num.toFixed(1);
+        }
+        runPointOps();
+    }
+
+    function runPointOps() {
+        const b = document.getElementById('num-bright').value;
+        const c = document.getElementById('num-contrast').value;
+        const g = document.getElementById('num-gamma').value;
+        const inv = document.getElementById('chk-invert').checked;
+
+        sendRequest('point', { brightness: b, contrast: c, gamma: g, invert: inv });
+    }
+
+    function applyMethod(mode) {
+        sendRequest(mode, {});
+    }
+
+    // Глобальный сброс всех настроек и возврат к чистому исходнику
+    function resetAll() {
+        document.getElementById('sl-bright').value = 0;
+        document.getElementById('num-bright').value = 0;
+        document.getElementById('sl-contrast').value = 10;
+        document.getElementById('num-contrast').value = '1.0';
+        document.getElementById('sl-gamma').value = 10;
+        document.getElementById('num-gamma').value = '1.0';
+        document.getElementById('chk-invert').checked = false;
+        document.getElementById('threshold-val').innerText = '—';
+        runPointOps();
+    }
+
+    async function sendRequest(mode, params) {
+        if (!curPreset) return;
+
+        const fd = new FormData();
+        fd.append('preset', curPreset);
+        fd.append('mode', mode);
+        for (const [k, v] of Object.entries(params)) {
+            fd.append(k, v);
+        }
+
+        try {
+            const res = await fetch('/api/process', { method: 'POST', body: fd });
+            const json = await res.json();
+            if (!res.ok) return alert(json.error || 'Ошибка');
+
+            const d = json.data;
+
+            const imgO = document.getElementById('img-orig');
+            const imgP = document.getElementById('img-proc');
+            imgO.src = 'data:image/png;base64,' + json.original;
+            imgO.style.display = 'block';
+            document.getElementById('orig-empty').style.display = 'none';
+
+            imgP.src = 'data:image/png;base64,' + d.image;
+            imgP.style.display = 'block';
+            document.getElementById('proc-empty').style.display = 'none';
+
+            document.getElementById('range-orig').innerText = `${d.stats_before.min} — ${d.stats_before.max}`;
+            document.getElementById('range-proc').innerText = `${d.stats_after.min} — ${d.stats_after.max}`;
+
+            document.getElementById('threshold-val').innerText = d.threshold !== null ? d.threshold : '—';
+            document.getElementById('time-badge').innerText = `${d.time_ms} мс`;
+
+            chOrig.data.datasets[0].data = d.stats_before.hist;
+            chOrig.update('none');
+
+            chProc.data.datasets[0].data = d.stats_after.hist;
+            const isThresh = mode.startsWith('threshold');
+            chProc.data.datasets[0].backgroundColor = isThresh ? 'rgba(59, 130, 246, 0.25)' : 'rgba(5, 150, 105, 0.25)';
+            chProc.data.datasets[0].borderColor = isThresh ? '#3b82f6' : '#059669';
+            chProc.update('none');
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    window.onload = () => {
+        initCharts();
+        loadPresets();
+    };
+</script>
+</body>
+</html>
